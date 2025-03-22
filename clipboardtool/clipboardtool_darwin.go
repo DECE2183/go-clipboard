@@ -1,13 +1,13 @@
 //go:build darwin
 
 // Copyright (c) 2023 Tiago Melo. All rights reserved.
+// Copyright (c) 2025 Timofey Korolik. All rights reserved.
 // Use of this source code is governed by the MIT License that can be found in
 // the LICENSE file.
 
 package clipboardtool
 
 import (
-	"errors"
 	"os/exec"
 )
 
@@ -20,34 +20,29 @@ const (
 
 var (
 	// copyTool is a preconfigured CopyTool for macOS using the pbcopy utility.
-	copyTool = &CopyTool{
-		Name: pbcopy,
+	copyTool = Tool{
+		name: pbcopy,
 	}
 	// pasteTool is a preconfigured PasteTool for macOS using the pbpaste utility.
-	pasteTool = &PasteTool{
-		Name: pbpaste,
+	pasteTool = Tool{
+		name: pbpaste,
 	}
 	// lookPath is a variable holding the exec.LookPath function,
 	// used to check for the presence of a command in the system's PATH.
 	lookPath = exec.LookPath
-
-	errNoCopyUtilitiesFound  = errors.New("no clipboard copy utilities available")
-	errNoPasteUtilitiesFound = errors.New("no clipboard paste utilities available")
 )
 
 // newClipboardTool initializes a new clipboardTool instance by
 // checking the availability of clipboard utilities.
-func newClipboardTool(primary bool) (*clipboardTool, error) {
-	if isAvailable := isToolAvailable(copyTool.Name); !isAvailable {
-		return nil, errNoCopyUtilitiesFound
+func newClipboardTool(primary bool) *ClipboardTool {
+	cbtool := &ClipboardTool{}
+	if isAvailable := isToolAvailable(copyTool.name); isAvailable {
+		cbtool.CopyTool = &copyTool
 	}
-	if isAvailable := isToolAvailable(pasteTool.Name); !isAvailable {
-		return nil, errNoPasteUtilitiesFound
+	if isAvailable := isToolAvailable(pasteTool.name); isAvailable {
+		cbtool.PasteTool = &pasteTool
 	}
-	return &clipboardTool{
-		CopyTool:  copyTool,
-		PasteTool: pasteTool,
-	}, nil
+	return cbtool
 }
 
 // isToolAvailable checks if a clipboard utility tool

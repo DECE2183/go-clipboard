@@ -1,13 +1,13 @@
 //go:build windows
 
 // Copyright (c) 2023 Tiago Melo. All rights reserved.
+// Copyright (c) 2025 Timofey Korolik. All rights reserved.
 // Use of this source code is governed by the MIT License that can be found in
 // the LICENSE file.
 
 package clipboardtool
 
 import (
-	"errors"
 	"os/exec"
 )
 
@@ -21,39 +21,34 @@ const (
 
 var (
 	// copyTool is a preconfigured CopyTool for Windows using the clip utility.
-	copyTool = &CopyTool{
-		Name: clip,
+	copyTool = Tool{
+		name: clip,
 	}
 	// pasteTool is a preconfigured PasteTool for Windows using PowerShell commands.
-	pasteTool = &PasteTool{
-		Name:    powershell,
-		CmdArgs: []string{"Get-Clipboard"},
+	pasteTool = Tool{
+		name: powershell,
+		args: []string{"Get-Clipboard"},
 	}
 	// lookPath is a variable holding the exec.LookPath function,
 	// used to check for the presence of a command in the system's PATH.
 	lookPath = exec.LookPath
-
-	errNoCopyUtilitiesFound  = errors.New("no clipboard copy utilities available")
-	errNoPasteUtilitiesFound = errors.New("no clipboard paste utilities available")
 )
 
 // newClipboardTool checks the availability of clipboard utilities
 // and initializes a new clipboardTool.
-func newClipboardTool(primary bool) (*clipboardTool, error) {
-	if isAvailable := toolIsAvailable(copyTool.Name); !isAvailable {
-		return nil, errNoCopyUtilitiesFound
+func newClipboardTool(primary bool) *ClipboardTool {
+	cbtool := &ClipboardTool{}
+	if isAvailable := isToolAvailable(copyTool.name); isAvailable {
+		cbtool.CopyTool = &copyTool
 	}
-	if isAvailable := toolIsAvailable(pasteTool.Name); !isAvailable {
-		return nil, errNoPasteUtilitiesFound
+	if isAvailable := isToolAvailable(pasteTool.name); isAvailable {
+		cbtool.PasteTool = &pasteTool
 	}
-	return &clipboardTool{
-		CopyTool:  copyTool,
-		PasteTool: pasteTool,
-	}, nil
+	return cbtool
 }
 
-// toolIsAvailable verifies the presence of a clipboard utility in the system's PATH.
-func toolIsAvailable(toolName string) bool {
+// isToolAvailable verifies the presence of a clipboard utility in the system's PATH.
+func isToolAvailable(toolName string) bool {
 	if _, err := lookPath(toolName); err != nil {
 		return false
 	}
